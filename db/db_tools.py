@@ -72,13 +72,3 @@ def create_table_knowledge_collection(collection_name,client):
         #"IP" = Inner Product（内积/点积），常用于 余弦相似度 或 向量化推荐系统。适合语义搜索
         index_params.add_index(field_name="table_embedding", index_type="FLAT", metric_type="IP")
         client.create_index(collection_name, index_params)
-        
-#     def search_table_knowledge_collection(self,collection_name,embedding_data):
-#         return self.client.search(
-#             collection_name=collection_name,
-#             data=embedding_data,
-#             anns_field="table_embedding",
-#             limit=3,
-#             output_fields=["table_real_name","columns"],
-#         )
-        

@@ -61,9 +61,6 @@ class MyStop(StoppingCriteria):
         return self.stop_flag["stop"]
 
 class HarmonyStreamer:
-    """
-    可替代 TextIteratorStreamer，增量解析 Harmony 消息。
-    """
     def __init__(self, encoding,stage_index=None):
         self.generated_ids = []
         self.finished = False
@@ -458,18 +455,6 @@ class TextGenerationModel(DbModel):
     def clear_chat_history(self,chat_history_id:str):
         self.messages_history.pop(chat_history_id, None) 
     def system_prompt(self):
-        # system_prompt=
-        # """
-        #     你是数据库查询智能体助手
-        #     必须严格遵循以下协议：
-        #     1、分析用户问题，提取涉及的数据表，数据表名必须使用中文描述，这个中文描述你可以从用户问题中提取，可以进行猜测表中文名。最终调用functions.map_tables_fields获取映射表，由系统执行，你可以直接停止输出任何消息到final通道。
-        #     2、得到映射表，如果映射表已经满足用户的问题后可以进行生成sql，否则你需要再次进行第1点获取其他还没得到映射的数据表结构，切记你生成的sql一定要通过分析映射表得到真实表名和真实字段名后再去生成。sql语句请采用分页查询，每页5条，查询第一页，sql语句不能含有任何的换行符，select每个字段都as起别名，别名使用用户问题中要返回的中文名。最终调用functions.query_table，由系统执行sql语句，你可以直接停止输出任何消息到final通道。
-        #     3、关于动态处理新增/修改条件，若用户发出新的查询请求，在你已经拥有的映射表中如果不存在关于新的查询请求中的数据表和字段，则请分析新的查询请求中新的数据表中文描述重新执行第1点，如果你有不清楚的数据表中文描述你就直接问用户，让用户给你提示还有什么可用的数据表中文描述，然后你再根据用户的数据表中文描述去执行第1点工作获取映射表，而如果已经得到映射的表和字段则无需重复提取。
-        #     4、functions.query_table函数可能会返回相关sql执行失败的异常信息给你，请麻烦分析异常信息，如果报错信息涉及语法错误，请对比异常信息检查你生成的sql是否有问题，重新执行第2点。
-        #     5、functions.query_table函数执行成功会返回一个数组的json结构给你，如果是一个空的数组json如"[]",说明没有数据，则直接在final通道输出"无数据"，否则就说："以下是查询结果："，然后请直接将这个数组json结构渲染成markdown的表格形式，然后同时对表格内的数据做简单总结，然后在最后询问一下用户是否需要生成统计图表，请你注意你不要询问用户要生成什么图表，你就直接说是否需要生成图表，最终在final通道输出。
-        #     6、在第5点，如果经过用户同意生成统计图表，得到用户的肯定答复，则你分析一下第5点的json数据，构成可生成图表的数据结构调用functions.plot_chart函数。
-        #     7、用户的问题如果涉及对数据库表的新增数据、修改数据、删除数据、新增数据表、删除数据表、修改数据表这6种数据库行为，请直接在final通道输出：{"code":"error","msg":"对不起，此数据库操作存在数据安全风险，我不予执行"}，但是请你注意其他行为不要返回此信息。
-        # """
         system_prompt="""
         你是数据库查询智能体助手  
         必须严格遵循以下协议：  
