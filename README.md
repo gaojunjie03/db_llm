@@ -27,3 +27,12 @@
 ### 安装依赖
 ```bash
 pip install -r requirements.txt
+
+---
+
+## 使用方法
+
+### 1. 启动服务
+在终端执行：
+```bash
+python gradio_app.py
