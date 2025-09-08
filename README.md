@@ -29,7 +29,8 @@
 
 ### 系统要求
 - Python >= 3.12  
-- CUDA 12.8+（可选，用于加速向量化与 LLM）  
+- CUDA 12.8+
+- GPU 显存48G+ 
 - CentOS / Ubuntu 等 Linux 系统  
 
 ### 安装依赖
