@@ -1,0 +1,10 @@
+gradio==5.44.1
+JayDeBeApi==1.2.3
+matplotlib==3.10.6
+openai_harmony==0.0.4
+pandas==2.3.2
+pymilvus==2.6.0
+sentence_transformers==5.1.0
+SQLAlchemy==2.0.43
+torch==2.8.0+cu128
+transformers==4.55.2
