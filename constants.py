@@ -1,1 +1,2 @@
 sentence_model=None
+text_generation_model=None

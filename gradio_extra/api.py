@@ -5,10 +5,10 @@ import json
 import traceback
 from sqlalchemy import text
 from db.db_tools import open_sqlite,open_milvus,create_table_knowledge_collection
-from models.db_models import SentenceModel,TextGenerationModel
 from log.log import logging
 from entity.ds_collection_info import DsCollectionInfo
 import uuid
+import constants
 def show_columns(all_fields,all_tables, evt: gr.SelectData):
     index=evt.index[0]
     table_name=all_tables[index]
@@ -39,7 +39,7 @@ def insert_into_milvus(milvus_collection_name,milvus_collection_description,ds_t
             create_table_knowledge_collection(milvus_collection_name,db.client)
             for start in range(0, len(table_column_description_df), batch_size):
                 batch = table_column_description_df.iloc[start:start+batch_size]
-                embeddings = sentence_model.predict(batch["description"].tolist())
+                embeddings = constants.sentence_model.predict(batch["description"].tolist())
                 data = [
                     {"table_real_name": table_real_name, "table_embedding": embedding, "columns": columns}
                     for table_real_name, embedding, columns in zip(
@@ -90,11 +90,11 @@ def chat_with_model(messages,history,ds_collection_info_id,all_ds_collection_inf
         logging.info("新的聊天，需要产生新的chat_history_id")
         if chat_history_id is not None:
             logging.info("清空{}的聊天记录".format(chat_history_id))
-            text_generation_model.clear_chat_history(chat_history_id)
+            constants.text_generation_model.clear_chat_history(chat_history_id)
         chat_history_id=str(uuid.uuid1())
     logging.info("用户的消息:{},聊天记录id:{},数据库信息:{}".format(messages,chat_history_id,str(result_ds_collection_info.__dict__)))
     contents=[]
-    for content in text_generation_model.predict(chat_history_id,messages,max_token,temperature,result_ds_collection_info,retry_num=retry_num):
+    for content in constants.text_generation_model.predict(chat_history_id,messages,max_token,temperature,result_ds_collection_info,retry_num=retry_num):
         contents.append(content)
         yield "".join(contents),chat_history_id
     logging.info("当前模型结束返回给gradio")
