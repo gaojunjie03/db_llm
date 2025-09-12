@@ -41,9 +41,9 @@ def insert_into_milvus(milvus_collection_name,milvus_collection_description,ds_t
                 batch = table_column_description_df.iloc[start:start+batch_size]
                 embeddings = constants.sentence_model.predict(batch["description"].tolist())
                 data = [
-                    {"table_real_name": table_real_name, "table_embedding": embedding, "columns": columns}
-                    for table_real_name, embedding, columns in zip(
-                        batch["table_real_name"].to_numpy(), embeddings, batch["columns"].to_numpy()
+                    {"table_real_name": table_real_name, "table_embedding": embedding, "columns": columns,"description":description,}
+                    for table_real_name, embedding, columns,description in zip(
+                        batch["table_real_name"].to_numpy(), embeddings, batch["columns"].to_numpy(),batch["description"].to_numpy()
                     )
                 ]
                 db.client.insert(collection_name=milvus_collection_name, data=data)
@@ -98,3 +98,26 @@ def chat_with_model(messages,history,ds_collection_info_id,all_ds_collection_inf
         contents.append(content)
         yield "".join(contents),chat_history_id
     logging.info("当前模型结束返回给gradio")
+
+def change_database_info(ds_collection_info_id,all_ds_collection_info):
+    if ds_collection_info_id == 0:
+        return gr.update(value=1,interactive=True),"",0,"","","","","","",None,[],[],[],gr.update(visible=False),gr.update(visible=True)
+    seek_list=list(filter(lambda x: x.id == ds_collection_info_id, all_ds_collection_info))
+    result_ds_collection_info = seek_list[0]
+    collection_name=result_ds_collection_info.collection_name
+    description=result_ds_collection_info.description
+    ds=dbutil.Datasource(**json.loads(result_ds_collection_info.datasource))
+    with open_milvus() as db:
+        res = db.client.query(
+            collection_name=collection_name,
+            output_fields=["table_real_name", "columns" , "description"],
+            limit=10000
+        )
+    df=pd.DataFrame(res)
+    df_outer = df[["table_real_name", "description", "columns"]].copy()
+    df_outer = df_outer.rename(columns={"table_real_name":"数据库表名","description":"描述"})
+    return gr.update(value=ds.TYPE,interactive=False),ds.IP,ds.PORT,ds.DATABASE_NAME,ds.SCHEMA,ds.USERNAME,ds.PASSWORD,collection_name,description,result_ds_collection_info,df_outer[["数据库表名","描述"]], df_outer["columns"].tolist(),df_outer["数据库表名"].tolist(),gr.update(visible=True),gr.update(visible=False)
+    
+    
+    
+    

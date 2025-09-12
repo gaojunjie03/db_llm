@@ -39,6 +39,14 @@ pip install -r requirements.txt
 cd models
 git lfs clone https://huggingface.co/openai/gpt-oss-20b
 git lfs clone https://huggingface.co/Qwen/Qwen3-Embedding-0.6B
+
+# 针对oracle
+ubuntu：
+apt-get install libaio1
+centos:
+yum install libaio
+echo $(pwd)/db/drivers/oracle/instantclient* > /etc/ld.so.conf.d/oracle-instantclient.conf && ldconfig
+
  ``` 
 ---
 

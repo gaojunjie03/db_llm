@@ -8,7 +8,6 @@ from urllib.parse import quote_plus as urlquote
 from sqlalchemy.orm import sessionmaker
 import json
 from urllib.parse import  unquote
-
 """
     datasource结构如下：
     {
@@ -89,7 +88,7 @@ def get_conn(datasource):
 
     if datasource.TYPE == 4 or datasource.TYPE == 3 or datasource.TYPE == 12 or datasource.TYPE == 6:
         dp=os.path.dirname(__file__)+"/drivers"
-        driver_paths = [dp + "/kingbase8-8.6.0.jar",dp + "/DmJdbcDriver18.jar",dp + "/quark-driver-8.37.3.jar",dp + "/hive-jdbc-3.1.2.jar",
+        driver_paths = [dp + "/kingbase8-8.6.0.jar",dp + "/DmJdbcDriver18.jar",dp + "/hive-jdbc-3.1.2.jar",
                         dp+"/libthrift-0.9.3.jar",dp+"/httpclient-4.4.1.jar",
                             dp + "/httpcore-4.4.1.jar",dp + "/slf4j-api-1.7.20.jar",dp + "/curator-client-2.6.0.jar",
                             dp + "/commons-lang-2.6.jar",dp + "/hive-exec-3.1.2.jar",
@@ -155,11 +154,11 @@ def get_tables_field(ds):
             })
     else:
         inspector=inspect(conn)
-        tables=inspector.get_table_names()
+        tables=inspector.get_table_names(schema=ds.SCHEMA)
         for table in tables:
-            table_comment = inspector.get_table_comment(table)
+            table_comment = inspector.get_table_comment(table,schema=ds.SCHEMA)
             columns = []
-            for col in inspector.get_columns(table):
+            for col in inspector.get_columns(table,schema=ds.SCHEMA):
                 columns.append({
                     "col_real_name":str(col['name']),
                     "col_type":str(col['type']),

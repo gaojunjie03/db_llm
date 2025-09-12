@@ -52,29 +52,47 @@ def map_tables_fields(params,ds_collection_info:DsCollectionInfo):
         table_name=table_names[idx]
         table_real_name=hit["entity"].get("table_real_name")
         columns=hit["entity"].get("columns")
+        col_obj=json.loads(columns)
+        for col in col_obj:
+            col["col_real_name"]=add_quote(col["col_real_name"],ds)
         result.append({
             "table_name":table_name,
-            "table_real_name":ds.SCHEMA+"."+table_real_name,
-            "cols":columns
+            "table_real_name":ds.SCHEMA+"."+add_quote(table_real_name,ds),
+            "cols":json.dumps(col_obj, ensure_ascii=False)
         })
+    data_syntax = f"""
+    请使用{dbutil.DATABASE_DICT[ds.TYPE]}数据库语法生成sql,请严格使用result中的table_real_name和col_real_name的值进行生成sql，不允许改变table_real_name和col_real_name的值去生成sql。
+    同时请注意，对表设置别名时不要用关键字如：user，尽量使用一些其他别名加数字的方式，比如from user as u1
+    """
     ret=json.dumps({
-         "data_syntax":"请使用"+dbutil.DATABASE_DICT[ds.TYPE]+"数据库语法生成sql", 
+         "data_syntax":data_syntax, 
          "result":result
     }, ensure_ascii=False)
     return ret,False
-    
+
+def add_quote(name,ds):
+    return "\""+name+"\"" if ds.TYPE==11 else name
+
+
 # 查询数据库表
 @functions_decorator
 def query_table(params,ds_collection_info:DsCollectionInfo):
     conn = None
     try:
         sql=params["sql"]
-        logging.info("最终执行的sql语句："+sql)
+
         ds=dbutil.Datasource(**json.loads(ds_collection_info.datasource))
         ds.unquote()
         conn=dbutil.get_conn(ds)
         if int(ds.TYPE) not in [4,3,6]:
+            if int(ds.TYPE) == 0:
+                sql=sql.rstrip()
+                if sql.endswith(";"):
+                    sql=sql[:-1]
+            logging.info("最终执行的sql语句："+sql)
             sql=text(sql)
+        else:
+            logging.info("最终执行的sql语句："+sql)
         records=pd.read_sql_query(sql,conn)
         return records.to_json(orient="records",force_ascii=False),True
     finally:
