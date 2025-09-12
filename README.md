@@ -47,6 +47,11 @@ centos:
 yum install libaio
 echo $(pwd)/db/drivers/oracle/instantclient* > /etc/ld.so.conf.d/oracle-instantclient.conf && ldconfig
 
+# 采用jaydebeapi查询相关数据库如dm、kingbase，需要配置jdk环境
+tar -zxvf jdk.tar.gz
+export JAVA_HOME=$(pwd)/jdk1.8.0_192
+export CLASSPATH=.:${JAVA_HOME}/lib/tools.jar:${JAVA_HOME}/lib/dt.jar
+export PATH=${JAVA_HOME}/bin:/bin:/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH
  ``` 
 ---
 
