@@ -5,7 +5,7 @@
 ---
 
 ## 功能特点
-- **数据库元数据获取**：支持 MySQL、Oracle、PostgreSQL、达梦、Kingbase、Hive 数据库。  
+- **数据库元数据获取**：支持 MySQL、Oracle、PostgreSQL、达梦、Kingbase 数据库。  
 - **智能表结构映射**：根据用户问题提取中文表描述，自动生成真实数据库表名与字段映射。  
 - **向量化知识库构建**：将表描述向量化并存储至 Milvus，支持语义检索。  
 - **自然语言智能查询**：用户用自然语言提问，系统自动生成 SQL 并返回查询结果。  
@@ -19,7 +19,7 @@
 - **嵌入式向量模型**：采用 [Sentence-Transformers] 的 Qwen3-Embedding-0.6B 模型（本地部署）进行表结构向量化。  
 - **语言生成模型**：使用 GPT-OSS-20B模型（本地部署）处理自然语言理解与 SQL 生成。  
 - **消息流式解析**：采用 OpenAI Harmony 格式及 StreamableParser 技术，实现高效流式生成和增量输出。  
-- **数据库与向量数据库支持**：MySQL、Oracle、PostgreSQL、Hive、达梦、Kingbase；向量数据存储在 Milvus，支持快速语义检索。  
+- **数据库与向量数据库支持**：MySQL、Oracle、PostgreSQL、达梦、Kingbase；向量数据存储在 Milvus，支持快速语义检索。  
 - **前端交互**：基于 Gradio Blocks + ChatInterface。  
 - **安全策略**：系统层面过滤高风险数据库操作，确保查询安全性。
 ---

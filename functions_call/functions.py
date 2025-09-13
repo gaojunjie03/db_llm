@@ -10,8 +10,112 @@ from functools import wraps
 import io
 import base64
 import matplotlib.pyplot as plt
+from entity.result import Result
 plt.rcParams['font.sans-serif'] = ['WenQuanYi Zen Hei']
 plt.rcParams['axes.unicode_minus'] = False
+from openai_harmony import DeveloperContent,ToolDescription
+
+harmony_functions=(
+                DeveloperContent.new()
+                .with_instructions("")
+                .with_function_tools(
+                    [
+                        ToolDescription.new(
+                            "map_tables_fields",
+                            "根据分析用户问题得到的各表中文描述获取各表对应的真实数据库表名和数据库表字段信息",
+                            parameters={
+                                "type": "object",
+                                "properties": {
+                                    "parameters": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "table_name":{
+                                                   "type":"string",
+                                                   "description": "中文描述的数据表名",
+                                                }
+                                            },
+                                             "required": ["table_name"],
+                                        },
+                                        "description": " 需要映射的表名列表，使用中文描述",
+                                    }
+                                },
+                                "required": ["parameters"],
+                            },
+                        ),
+                        ToolDescription.new(
+                            "query_table",
+                            "执行sql语句",
+                            parameters={
+                                "type": "object",
+                                "properties": {
+                                    "parameters": {
+                                        "type": "object",
+                                        "properties": {
+                                            "sql":{
+                                                   "type":"string",
+                                                   "description": "sql语句",
+                                                }
+                                            },
+                                            "required": ["sql"]
+                                        },
+                                        "description": "参数对象",
+                                    },
+                                    "required": ["parameters"],
+                                },
+                        ),
+                        ToolDescription.new(
+                            "plot_charts",
+                            "根据最新的查询结果生成统计图表",
+                            parameters={
+                                "type": "object",
+                                "properties": {
+                                    "parameters": {
+                                        "type": "object",
+                                        "properties": {
+                                            "summary":{
+                                                  "type":"string",
+                                                  "description":"对图表数据简单总结一两句话"
+                                            },
+                                            "title":{
+                                                   "type":"string",
+                                                   "description": "统计图表的标题",
+                                            },
+                                            "bar_xlabel":{
+                                                   "type":"string",
+                                                   "description": "横坐标名称",
+                                            },
+                                            "bar_ylabel":{
+                                                   "type":"string",
+                                                   "description": "纵坐标名称",
+                                            },
+                                            "label":{
+                                                  "type":"array",
+                                                  "description": "标签数据",
+                                                   "items": {
+                                                        "type": "string",
+                                                    },
+                                            },
+                                            "data":{
+                                                  "type":"array",
+                                                  "description": "各标签对应的统计数据",
+                                                   "items": {
+                                                        "type": "number",
+                                                    },
+                                            },
+                                            "required": ["summary","title","label","data","bar_xlabel","bar_ylabel"]
+                                        },
+                                        "description": "参数对象",
+                                    },
+                                    "required": ["parameters"],
+                                },
+                            },
+                        ),
+                    ]
+                )
+            )
+
 
 class FunctionsException(BaseException):
     def __init__(self, message):
@@ -55,20 +159,20 @@ def map_tables_fields(params,ds_collection_info:DsCollectionInfo):
         col_obj=json.loads(columns)
         for col in col_obj:
             col["col_real_name"]=add_quote(col["col_real_name"],ds)
-        result.append({
-            "table_name":table_name,
-            "table_real_name":ds.SCHEMA+"."+add_quote(table_real_name,ds),
-            "cols":json.dumps(col_obj, ensure_ascii=False)
-        })
-    data_syntax = f"""
-    请使用{dbutil.DATABASE_DICT[ds.TYPE]}数据库语法生成sql,请严格使用result中的table_real_name和col_real_name的值进行生成sql，不允许改变table_real_name和col_real_name的值去生成sql。
-    同时请注意，对表设置别名时不要用关键字如：user，尽量使用一些其他别名加数字的方式，比如from user as u1
-    """
-    ret=json.dumps({
-         "data_syntax":data_syntax, 
-         "result":result
-    }, ensure_ascii=False)
-    return ret,False
+        table_real_name=ds.SCHEMA+"."+add_quote(table_real_name,ds)
+        need_append=True
+        for rr in result:
+            if rr["table_real_name"] == table_real_name:
+                rr["table_name"] += ","+table_name
+                need_append=False
+        if need_append:
+            result.append({
+                    "table_name":table_name,
+                    "table_real_name":table_real_name,
+                    "cols":json.dumps(col_obj, ensure_ascii=False)
+            })
+    msg = f"""使用{dbutil.DATABASE_DICT[ds.TYPE]}数据库语法生成sql，然后调用functions.query_table"""
+    return Result(msg,data=result)
 
 def add_quote(name,ds):
     return "\""+name+"\"" if ds.TYPE==11 else name
@@ -94,7 +198,13 @@ def query_table(params,ds_collection_info:DsCollectionInfo):
         else:
             logging.info("最终执行的sql语句："+sql)
         records=pd.read_sql_query(sql,conn)
-        return records.to_json(orient="records",force_ascii=False),True
+        # if len(records) == 0:
+        #     return Result("""
+        #     当前查询sql没有数据，请直接在final通道输出"无数据"
+        #     """)
+        return Result("""
+            请直接在final通道输出"以下是查询结果(如果需要生成统计图表可以对我说"生成统计图表")："，同时将data的数据信息转成markdown的表格格式输出，并根据data数据简单做一两句总结。
+        """,data=records.to_dict(orient="records"))
     finally:
         if conn is not None:
             conn.close()
@@ -111,6 +221,7 @@ def fig_to_base64(fig):
 #生成图表
 @functions_decorator
 def plot_charts(params,ds_collection_info:DsCollectionInfo=None):
+    summary=params["summary"]
     title=params["title"]
     bar_xlabel=params["bar_xlabel"]
     bar_ylabel=params["bar_ylabel"]
@@ -129,4 +240,4 @@ def plot_charts(params,ds_collection_info:DsCollectionInfo=None):
     pie_ax.pie(data, labels=label, autopct='%1.1f%%')
     pie_ax.set_title(title+"-饼图")
     pie_b64 = fig_to_base64(pie_fig)
-    return f"柱状图:\n\n![bar]({bar_b64})\n\n饼图:\n\n![pie]({pie_b64})",True
+    return Result(summary,data=f"![bar]({bar_b64}) ![pie]({pie_b64})",last_stage=True)

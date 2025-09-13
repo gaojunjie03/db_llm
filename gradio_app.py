@@ -2,7 +2,7 @@ import extra_network
 import constants
 import gradio as gr
 import os
-from gradio_extra.api import show_columns,update_columns,insert_into_milvus,delete_tables,get_db_metadata,get_ds_collection_infos,chat_with_model,change_database_info
+from gradio_extra.api import show_columns,update_columns,insert_into_milvus,delete_tables,get_db_metadata,get_ds_collection_infos,chat_with_model,change_database_info,delete_ds_collection_info
 from gradio_extra.frontend import css,head
 from log.log import logging
 from models.db_models import SentenceModel,TextGenerationModel
@@ -31,7 +31,7 @@ with gr.Blocks(css=css,head=head) as demo:
         with gr.Accordion("使用说明", open=False): 
             gr.Markdown("""
                 - **选择数据库**  
-                  支持多种数据库类型：Oracle、MySQL、PostgreSQL、达梦、Kingbase 和 Hive。        
+                  支持多种数据库类型：Oracle、MySQL、PostgreSQL、达梦、Kingbase。        
                 - **信息录入**  
                   输入目标数据库的关键信息，包括：IP 地址、端口号、数据库模式、数据库名、用户名和密码。         
                 - **获取元数据**  
@@ -47,22 +47,18 @@ with gr.Blocks(css=css,head=head) as demo:
                 """)
         with gr.Row():
             with gr.Column(scale=2):
-                with open_sqlite() as db:
-                    none_ds=DsCollectionInfo()
-                    none_ds.id=0
-                    none_ds.description="请选择"
-                    rows=[none_ds]
-                    rows.extend(db.session.query(DsCollectionInfo).all())
-                already_all_ds_collection_info_state=gr.State(rows)
-                already_insert_db_info = gr.Dropdown(choices=[(r.description,r.id) for r in rows],label="选择已入库的数据库信息进行修改",interactive=True)
+                already_all_ds_collection_info_state=gr.State([])
+                already_insert_db_info = gr.Dropdown(choices=[],label="选择已入库的数据库信息进行修改",interactive=True)
+                refresh_already_ds_collection_infos_btn=gr.Button("刷新已入库数据库信息", elem_classes="fancy-btn green-btn", visible=True)
+                delete_ds_collection_infos_btn=gr.Button("删除当前数据库信息", elem_classes="fancy-btn red-btn", visible=False)
+                delete_box_markdown = gr.Markdown("", visible=False)
                 already_insert_db_info_select_state=gr.State()
                 ds_type = gr.Dropdown(choices=[
                 ("Oracle 数据库", 0),   
                 ("MySQL 数据库", 1),
                 ("达梦数据库",3),
                 ("Kingbase 数据库", 4),
-                ("PostgreSQL 数据库", 11),
-                ("Hive 数据库", 6)],value=1, label="请选择数据库类型",interactive=True)
+                ("PostgreSQL 数据库", 11)],value=1, label="请选择数据库类型",interactive=True)
                 database_ip = gr.Textbox(label="请输入数据库ip")
                 database_port = gr.Number(label="请输入数据库端口")
                 database_name = gr.Textbox(label="请输入数据库名")
@@ -85,15 +81,16 @@ with gr.Blocks(css=css,head=head) as demo:
                 field_state = gr.State([])
                 table_state = gr.State([])
                 current_table_index_state=gr.State()
-            already_insert_db_info.select(change_database_info,inputs=[already_insert_db_info,already_all_ds_collection_info_state],outputs=[ds_type,database_ip,
-                                                                                                                                                 database_port,database_name,
-                                                                                                                                                database_schema,database_username,
-database_password,milvus_collection_name,milvus_collection_description,already_insert_db_info_select_state,tables_df,field_state,table_state,insert_milvus_btn,metadata_btn])    
+            already_insert_db_info.change(change_database_info,inputs=[already_insert_db_info,already_all_ds_collection_info_state],outputs=[ds_type,database_ip,database_port,database_name,
+database_schema,database_username,
+database_password,milvus_collection_name,milvus_collection_description,already_insert_db_info_select_state,tables_df,field_state,table_state,insert_milvus_btn,metadata_btn,delete_ds_collection_infos_btn])   
             tables_df.change(delete_tables,inputs=[current_table_index_state,tables_df,table_state,field_state,columns_df],outputs=[table_state,field_state,columns_df])    
             tables_df.select(show_columns, inputs=[field_state,table_state], outputs=[columns_df,current_table_index_state])
             columns_df.input(update_columns,inputs=[field_state,columns_df,current_table_index_state], outputs=[columns_df,field_state])
             metadata_btn.click(get_db_metadata,inputs=[ds_type,database_ip,database_port,database_name,database_schema,database_username,database_password],outputs=[tables_df,field_state,table_state,milvus_collection_name,milvus_collection_description,insert_milvus_btn])
-            insert_milvus_btn.click(insert_into_milvus,inputs=[milvus_collection_name,milvus_collection_description,ds_type,database_ip,database_port,database_name,database_schema,database_username,database_password,tables_df,field_state],outputs=[info_box_markdown])
+            insert_milvus_btn.click(insert_into_milvus,inputs=[milvus_collection_name,milvus_collection_description,ds_type,database_ip,database_port,database_name,database_schema,database_username,database_password,tables_df,field_state],outputs=[info_box_markdown,milvus_collection_name,milvus_collection_description,ds_type,database_ip,database_port,database_name,database_schema,database_username,database_password,tables_df,field_state,columns_df,insert_milvus_btn])
+            refresh_already_ds_collection_infos_btn.click(get_ds_collection_infos,inputs=[],outputs=[already_insert_db_info,already_all_ds_collection_info_state])
+            delete_ds_collection_infos_btn.click(delete_ds_collection_info,inputs=[already_insert_db_info_select_state],outputs=[delete_box_markdown,already_insert_db_info,already_all_ds_collection_info_state])
     with gr.Accordion("数据库智能查询", open=False):  
         with gr.Accordion("使用说明", open=False): 
              gr.Markdown("""
@@ -120,7 +117,7 @@ database_password,milvus_collection_name,milvus_collection_description,already_i
                  ds_collection_info_state=gr.State([])
             with gr.Column(scale=4):
                  chat_history_id=gr.State()
-                 gr.ChatInterface(
+                 chat_interface=gr.ChatInterface(
                         chat_with_model,
                         type="messages",
                         chatbot=gr.Chatbot(height=700),
