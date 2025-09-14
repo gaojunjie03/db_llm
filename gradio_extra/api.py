@@ -22,7 +22,11 @@ def show_columns(all_fields,all_tables, evt: gr.SelectData):
     return gr.update(value=df_inner,label=table_name+"表的元数据结构信息"),index
             
 def update_columns(all_fields,columns_df_data,current_table_index):
-    all_fields[current_table_index]=json.dumps(columns_df_data.to_dict(orient="records"), ensure_ascii=False)
+    all_fields[current_table_index]=json.dumps(columns_df_data.rename(columns={
+          "字段名":"col_real_name" ,
+          "类型":"col_type",
+          "备注":"col_memo"
+    }).to_dict(orient="records"), ensure_ascii=False)
     return columns_df_data,all_fields
 
 def insert_into_milvus(milvus_collection_name,milvus_collection_description,ds_type,database_ip,database_port,database_name,database_schema,database_username,database_password,table_infos,field_infos):
@@ -51,6 +55,7 @@ def insert_into_milvus(milvus_collection_name,milvus_collection_description,ds_t
                 db.client.insert(collection_name=milvus_collection_name, data=data)
                 
         with open_sqlite(need_commit=True) as db:
+            db.session.query(DsCollectionInfo).filter_by(collection_name=milvus_collection_name).delete()
             ds_collection_info = DsCollectionInfo(collection_name=milvus_collection_name, description=milvus_collection_description,
                                                   datasource=json.dumps(dbutil.Datasource(database_name,database_ip, database_port, database_username, database_password, ds_type,SCHEMA=database_schema).to_dict()))
             db.session.add_all([ds_collection_info])
@@ -85,8 +90,6 @@ def inner_get_ds_collection_infos():
         none_ds.description="请选择"
         rows=[none_ds]
         rows.extend(db.session.query(DsCollectionInfo).all())
-    # with open_sqlite() as db:
-    #     rows=db.session.query(DsCollectionInfo).all()
     return rows
 
 def get_ds_collection_infos():

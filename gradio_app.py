@@ -44,6 +44,8 @@ with gr.Blocks(css=css,head=head) as demo:
                   如遇到不需要查询的表或字段，可以通过右键删除来精简知识库内容。这样不仅减少了存储空间，还有效降低了GPU显存占用，使模型更加聚焦于关键数据。
                 - **元数据信息入库**  
                   完成上述步骤后，可以将表的元数据信息入库到向量数据库。在填写入库表名时，确保使用英文+数据作为表名，方便向量数据库的管理与查询。输入表的描述信息以提供友好的展示，并点击“元数据信息入库”按钮完成操作。
+                - **修改已入库的数据库信息**
+                  可以随时对已入库到向量数据库的数据库信息进行修改。
                 """)
         with gr.Row():
             with gr.Column(scale=2):
@@ -120,7 +122,7 @@ database_password,milvus_collection_name,milvus_collection_description,already_i
                  chat_interface=gr.ChatInterface(
                         chat_with_model,
                         type="messages",
-                        chatbot=gr.Chatbot(height=700),
+                        chatbot=gr.Chatbot(height=1000),
                         additional_inputs=[ds_collection_infos_select,ds_collection_info_state,max_token_slider,temperature_slider,chat_history_id,retry_slider],
                         additional_outputs=[chat_history_id],
                         textbox=gr.Textbox(placeholder="请用自然语言描述查询需求", container=False, scale=7)

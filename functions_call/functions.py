@@ -157,6 +157,7 @@ def map_tables_fields(params,ds_collection_info:DsCollectionInfo):
         table_real_name=hit["entity"].get("table_real_name")
         columns=hit["entity"].get("columns")
         col_obj=json.loads(columns)
+        logging.info(col_obj)
         for col in col_obj:
             col["col_real_name"]=add_quote(col["col_real_name"],ds)
         table_real_name=ds.SCHEMA+"."+add_quote(table_real_name,ds)
@@ -240,4 +241,4 @@ def plot_charts(params,ds_collection_info:DsCollectionInfo=None):
     pie_ax.pie(data, labels=label, autopct='%1.1f%%')
     pie_ax.set_title(title+"-饼图")
     pie_b64 = fig_to_base64(pie_fig)
-    return Result(summary,data=f"![bar]({bar_b64}) ![pie]({pie_b64})",last_stage=True)
+    return Result(summary,data=f"以下是统计图表展示: \n ![bar]({bar_b64}) ![pie]({pie_b64})",last_stage=True)

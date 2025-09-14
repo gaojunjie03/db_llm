@@ -217,6 +217,7 @@ class TextGenerationModel(DbModel):
             last_channel = ""
             commentary_name=None
             commentary_content=None
+            last_output_div=False
             def get_commentary_tool(name,content):
                 logging.info("阶段{}最终的函数调用{}{}".format(stage_index,name,content))
                 validate_flag,content_body=validate_json(content)
@@ -275,6 +276,7 @@ class TextGenerationModel(DbModel):
                         if thinking:
                             yield f"\n</div>\n"
                             yield f"\n</details>\n"
+                            last_output_div=True
                         thinking=False
                         last_answer +=last_content_delta
                         if commentary_name is None :
@@ -369,8 +371,9 @@ class TextGenerationModel(DbModel):
                 yield f"\n阶段{stage_index}系统出现异常，开始重试\n"
             finally:
                 stage_index = stage_index+1
-                yield f"\n</div>\n"
-                yield f"\n</details>\n"
+                if not last_output_div:
+                    yield f"\n</div>\n"
+                    yield f"\n</details>\n"
     def clear_chat_history(self,chat_history_id:str):
         self.messages_history.pop(chat_history_id, None) 
     def system_prompt(self):
