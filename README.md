@@ -66,3 +66,15 @@ python gradio_app.py
 ```bash
 http://127.0.0.1:6006
  ```
+### 3.示意图
+![image](https://github.com/user-attachments/assets/58dcd992-facc-424d-a7c8-29d4a78316ca)
+
+![image](https://github.com/user-attachments/assets/549c9a87-4ff7-49ea-8647-6d4095af019e)
+
+![image](https://github.com/user-attachments/assets/aef46f2c-e78a-43ab-8c83-69240aa68f12)
+
+![image](https://github.com/user-attachments/assets/5e1af5f7-277e-483d-b941-c742dbbcf130)
+
+
+
+
