@@ -105,7 +105,7 @@ def chat_with_model(messages,history,ds_collection_info_id,all_ds_collection_inf
         yield "".join(["请","选","择","查","询","的","数","据","库","信","息"]),chat_history_id
         return 
     result_ds_collection_info = list(filter(lambda x: x.id == ds_collection_info_id, all_ds_collection_info))[0]
-    if len(history)==0:
+    if len(history)==0 or chat_history_id is None:
         logging.info("新的聊天，需要产生新的chat_history_id")
         if chat_history_id is not None:
             logging.info("清空{}的聊天记录".format(chat_history_id))
@@ -145,5 +145,7 @@ def delete_ds_collection_info(result_ds_collection_info):
     rows=inner_get_ds_collection_infos()
     return gr.update(value="✅ 删除成功！",visible=True),gr.update(choices=[(r.description,r.id) for r in rows],value=0),rows
     
+def change_search_database_info():
+    return None
     
 

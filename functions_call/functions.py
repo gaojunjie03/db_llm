@@ -157,7 +157,6 @@ def map_tables_fields(params,ds_collection_info:DsCollectionInfo):
         table_real_name=hit["entity"].get("table_real_name")
         columns=hit["entity"].get("columns")
         col_obj=json.loads(columns)
-        logging.info(col_obj)
         for col in col_obj:
             col["col_real_name"]=add_quote(col["col_real_name"],ds)
         table_real_name=ds.SCHEMA+"."+add_quote(table_real_name,ds)
@@ -199,10 +198,6 @@ def query_table(params,ds_collection_info:DsCollectionInfo):
         else:
             logging.info("最终执行的sql语句："+sql)
         records=pd.read_sql_query(sql,conn)
-        # if len(records) == 0:
-        #     return Result("""
-        #     当前查询sql没有数据，请直接在final通道输出"无数据"
-        #     """)
         return Result("""
             请直接在final通道输出"以下是查询结果(如果需要生成统计图表可以对我说"生成统计图表")："，同时将data的数据信息转成markdown的表格格式输出，并根据data数据简单做一两句总结。
         """,data=records.to_dict(orient="records"))

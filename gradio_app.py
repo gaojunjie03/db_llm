@@ -2,7 +2,7 @@ import extra_network
 import constants
 import gradio as gr
 import os
-from gradio_extra.api import show_columns,update_columns,insert_into_milvus,delete_tables,get_db_metadata,get_ds_collection_infos,chat_with_model,change_database_info,delete_ds_collection_info
+from gradio_extra.api import show_columns,update_columns,insert_into_milvus,delete_tables,get_db_metadata,get_ds_collection_infos,chat_with_model,change_database_info,delete_ds_collection_info,change_search_database_info
 from gradio_extra.frontend import css,head
 from log.log import logging
 from models.db_models import SentenceModel,TextGenerationModel
@@ -127,5 +127,6 @@ database_password,milvus_collection_name,milvus_collection_description,already_i
                         additional_outputs=[chat_history_id],
                         textbox=gr.Textbox(placeholder="请用自然语言描述查询需求", container=False, scale=7)
                  )
+            ds_collection_infos_select.change(change_search_database_info,inputs=[],outputs=[chat_history_id])
             get_ds_collection_infos_btn.click(get_ds_collection_infos,inputs=[],outputs=[ds_collection_infos_select,ds_collection_info_state])
 demo.launch(share=True,server_port=6006)
