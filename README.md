@@ -2,6 +2,8 @@
 
 数据库智能查询系统。支持数据库元数据管理、表结构映射、向量化入库、以及基于大语言模型的自然语言智能查询，能够自动生成 SQL 并可视化查询结果。
 
+(This is my first open-source project after stepping into AI large language models. It’s still pretty simple, but every star means a lot to me. Thanks for your support!)
+
 ---
 
 ## 功能特点
